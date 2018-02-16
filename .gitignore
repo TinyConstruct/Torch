@@ -1,0 +1,17 @@
+
+data/atlas.bmp
+*.filters
+*.sln
+*.suo
+*.vcxproj
+*.user
+*.opensdf
+*.sdf
+*.pdb
+*.idb
+*.tlog
+*.log
+*.i
+*.obj
+*.ilk
+*.exe
