@@ -8,6 +8,8 @@ Points are vectors where the fourth component (w) is 1 by default
 */
 
 #define M_PI  3.14159265358979323846f
+#define M_PI_2  3.14159265358979323846f/2.0f
+
 #define min(a,b)   ((a) < (b) ? (a) : (b))
 #define max(a,b)   ((a) > (b) ? (a) : (b))
 #define degToRad(a)  ((a)*(M_PI/180))

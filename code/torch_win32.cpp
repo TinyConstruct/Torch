@@ -212,7 +212,12 @@ WinMain(HINSTANCE instance,
         float verticalCamOffset = numVerticalTiles/2.0f;
         float horizontalCamOffset = numHorizontalTiles/2.0f;
         gameState.cameraCenter.x = player.center.x;
-        gameState.cameraCenter.y = player.center.y;
+        if(player.facing == FACING_RIGHT || player.facing == FACING_LEFT) {
+          gameState.cameraCenter.y = player.destination.y;
+        }
+        else {
+          gameState.cameraCenter.y = player.center.y;
+        }
         getOrthoProjMatrix(gameState.cameraCenter.y - verticalCamOffset, gameState.cameraCenter.y + verticalCamOffset, 
           gameState.cameraCenter.x - horizontalCamOffset, gameState.cameraCenter.x + horizontalCamOffset, -4.0f, 4.0f, projMat);
         

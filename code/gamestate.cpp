@@ -68,6 +68,12 @@ void updatePlayerMovement(Player* playerPtr, float dt) {
   if(playerPtr->moving) {
     playerPtr->moveDuration += dt;
     float movePercentage =  playerPtr->moveDuration / playerSecondsPerTile;
+  //TODO: Enable for bouncy characters, but shadows are currently on each sprite, and 
+    //camera follows player center; to fix camera, strap y to player origin or dest
+    float yJumpOffset = 0.0f;
+    if(playerPtr->facing==FACING_LEFT || playerPtr->facing==FACING_RIGHT) {
+      yJumpOffset = 0.5f * sinf(movePercentage * M_PI_2);
+    }
     if(movePercentage >= 1.0f) {
       playerPtr->moving = false;
       playerPtr->origin.x = playerPtr->destination.x;
@@ -78,7 +84,7 @@ void updatePlayerMovement(Player* playerPtr, float dt) {
     }
     else{
       playerPtr->center.x = (1.0f - movePercentage) * playerPtr->origin.x + movePercentage*playerPtr->destination.x;
-      playerPtr->center.y = (1.0f - movePercentage) * playerPtr->origin.y + movePercentage*playerPtr->destination.y;
+      playerPtr->center.y = (1.0f - movePercentage) * playerPtr->origin.y + movePercentage*playerPtr->destination.y + yJumpOffset;
     }
   }
 }
