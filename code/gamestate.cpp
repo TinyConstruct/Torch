@@ -45,9 +45,6 @@ void tuneTileSprites(GameState* state) {
   }
 }
 
-
-
-
 void initializeEntityGroup(EntityGroup* group, int numEntities) {
   group->base = (Entity*) VirtualAlloc(0, sizeof(Entity)*numEntities, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
   assert(group->base != 0);

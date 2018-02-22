@@ -59,6 +59,6 @@ struct EntityGroup {
   Entity* base;
 };
 
-EntityGroup mobEntities;
-GameState gameState;
-Player player;
+global_variable EntityGroup mobEntities;
+global_variable GameState gameState;
+global_variable Player player;

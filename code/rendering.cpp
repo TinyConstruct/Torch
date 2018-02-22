@@ -1,5 +1,4 @@
 #include "rendering.h"
-GLuint shaderProgram;
 
 //Returns the upper-left texture coordinate for a sprite (indexed where 0,0 is the top left)
 inline v2 getSpriteUVFromIndex(float x, float y) {
@@ -45,7 +44,7 @@ void initializeQuadRenderGroup(RenderGroup* buffer, int spriteCapacity) {
 }
 
 void updateQuadRenderGroupSprites(RenderGroup* sprites, EntityGroup* entities) {
-  /*Andy: For now, let's commit to doing translate/rotates on the CPU. I'd rather have one long
+  /*NOTE (Andy): For now, let's commit to doing translate/rotates on the CPU. I'd rather have one long
     entity sprite buffer whose vertices are always updated every frame than many draw calls. 
     I honestly do not know if this is the "correct" choice! */
   //int offset = 0;

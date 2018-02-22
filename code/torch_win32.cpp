@@ -13,16 +13,16 @@
 
 #include "aro_generic.h"
 #include "torch_win32.h"
-#include "aro_platform_win32.cpp"
 #include "aro_math.h"
+#include "aro_platform_win32.cpp"
 #include "aro_opengl.cpp"
 #include "gamestate.cpp"
 #include "rendering.cpp"
 #include "simulation.cpp"
 
-bool globalRunning;
-
+global_variable bool globalRunning;
 global_variable Win32WindowDimensions globalWindowDimensions;
+
 
 LRESULT CALLBACK
 win32MainWindowCallback(HWND window, UINT message, WPARAM WParam, LPARAM LParam) {       
@@ -183,6 +183,18 @@ WinMain(HINSTANCE instance,
           TranslateMessage(&message);
           DispatchMessageA(&message);
         }
+
+        updatePlayerMovement(&player, lastFrameSec);
+        //update sprite idle animations
+        spriteFlipCounter += lastFrameSec;
+        if(spriteFlipCounter > idleFlipTime) {
+          spriteFlipCounter -= idleFlipTime;
+          gameState.flipSprites = true;
+        }
+
+        updateQuadRenderGroupSprites(&mobSprites, &mobEntities);
+        updatePlayerSprite(&playerSprite, &player);
+        frameUpdateCleanup();
         
         glClearColor(1.0,1.0,0.0,1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -190,23 +202,12 @@ WinMain(HINSTANCE instance,
         t += lastFrameSec/2.0f; 
         v3 xmov = V3(sin(t),0.0f,0.0f);
         
-        m4x4 modelMat = identity();//translate(xmov);
+        /* Currently no use for a per-quad model matrix
+        4x4 modelMat = identity();
         GLuint modelID = glGetUniformLocation(shaderProgram, "model");
-        glUniformMatrix4fv(modelID, 1, GL_TRUE, (float*) modelMat.n);
-        //The camera view has a center in global space
+        glUniformMatrix4fv(modelID, 1, GL_TRUE, (float*) modelMat.n);*/
 
-        
-        updatePlayerMovement(&player, lastFrameSec);
 
-        //update sprite idle animations
-        spriteFlipCounter += lastFrameSec;
-        if(spriteFlipCounter > idleFlipTime) {
-          spriteFlipCounter -= idleFlipTime;
-          gameState.flipSprites = true;
-        }
-        updateQuadRenderGroupSprites(&mobSprites, &mobEntities);
-        updatePlayerSprite(&playerSprite, &player);
-        frameUpdateCleanup();
         m4x4 projMat;
         float verticalCamOffset = numVerticalTiles/2.0f;
         float horizontalCamOffset = numHorizontalTiles/2.0f;

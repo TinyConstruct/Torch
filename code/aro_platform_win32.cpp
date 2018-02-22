@@ -70,7 +70,7 @@ Win32WindowDimensions win32GetWindowDimension(HWND window)
   return(result);
 }
 
-void *getWin32GLFunc(const char *name)
+void* getWin32GLFunc(const char *name)
 {
   void *p = (void *)wglGetProcAddress(name);
   if(p == 0 ||

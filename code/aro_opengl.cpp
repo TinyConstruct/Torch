@@ -1,6 +1,5 @@
 #include "aro_opengl.h"
 
-
 opengl_info checkOpenGLExtensions() {
   if(!glGetStringi) {
     glGetStringi = (gl_get_stringi*) getWin32GLFunc("glGetStringi");
@@ -150,8 +149,7 @@ GLuint compileShader(const char* vertSrc, const char* fragSrc) {
   glCompileShader(vertex);
   // print compile errors if any
   glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
-  if(!success)
-  {
+  if(!success) {
     char buffer[512];
     glGetShaderInfoLog(vertex, 512, NULL, buffer);
     OutputDebugString(buffer);

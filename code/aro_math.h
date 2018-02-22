@@ -1,19 +1,17 @@
 /*
 General purpose games-math library.
 Vectors: I didn't want to have class-like structs, and I'm not personally a fan of numerical indexes into vectors. 
-Fourth component of v4s (w) is 0 by default
-Vector functions working by value is somewhat intentional, since they are small, so the tradeoff of passing by reference is hard to assess. 
-Matrices: row-major order.
-Points: are vectors where the fourth component (w) is 1 by default
+Fourth component (w) of v4s is 0 by default
+Vector functions receiving values instead of refs is somewhat intentional, since they are small, so the tradeoff of passing by reference is hard to assess. 
+Matrices are row-major order.
+Points are vectors where the fourth component (w) is 1 by default
 */
 
+#define M_PI  3.14159265358979323846f
 #define min(a,b)   ((a) < (b) ? (a) : (b))
 #define max(a,b)   ((a) > (b) ? (a) : (b))
-#define M_PI  3.14159265358979323846f
 #define degToRad(a)  ((a)*(M_PI/180))
 #define radToDeg(a)  ((a)*(180/M_PI))
-
-
 
 ////////////// V2 ////////////////////////////////
 struct v2 {
@@ -146,6 +144,7 @@ inline v3 normalize(const v3& v) {
   return (v/magnitude(v));
 }
 
+
 ////////////// V4 ////////////////////////////////
 struct v4 {
   float x,y,z,w;
@@ -224,6 +223,7 @@ inline v4 V4(v3 XYZ) {
   return v;
 }
 
+
 //Points have implied w=1 components
 ////////////// P3 ////////////////////////////////
 struct p3 {
@@ -248,7 +248,7 @@ inline v3 operator-(p3 a, p3 b) {
 
 
 ////////////// Matrix 4x4 ////////////////////////////////
-//TODO: think about reference passing cost and SIMD 
+//TODO: think about reference passing cost and SIMD? 
 struct m4x4 {
     //Row major!
     float n[4][4];
@@ -428,7 +428,6 @@ void getOrthoProjMatrix(
     const float &b, const float &t, const float &l, const float &r, 
     const float &n, const float &f, m4x4& M) 
 { 
-
     // set OpenGL orthographic projection matrix
     M.n[0][0] = 2 / (r - l); 
     M.n[0][1] = 0; 

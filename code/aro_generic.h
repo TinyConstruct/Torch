@@ -1,8 +1,4 @@
-#include <stdint.h>
-
 #define ASSERTIONS_ENABLED 1
-#define DEBUG 1
-
 
 typedef int8_t int8;
 typedef int16_t int16;

@@ -99,7 +99,7 @@ struct opengl_info{
 };
 
 
-opengl_info globalGLInfo;
+global_variable opengl_info globalGLInfo;
 
 //GL types
 typedef char GLchar;
@@ -174,7 +174,6 @@ typedef void WINAPI gl_active_texture(GLenum texture);
 gl_active_texture* glActiveTexture;
 typedef void WINAPI gl_uniform_matrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 gl_uniform_matrix4fv* glUniformMatrix4fv;
-
 typedef void WINAPI gl_buffer_sub_data  (GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
 gl_buffer_sub_data* glBufferSubData;
 

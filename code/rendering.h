@@ -33,14 +33,12 @@ in vec3 position;
 in vec2 texcoordIn;
 
 uniform mat4 projection;
-uniform mat4 model;
-
 
 out vec2 texcoordOutFromVert;
 
 void main()
 {
-  gl_Position = projection * model * vec4(position.x, position.y, position.z, 1.0f);
+  gl_Position = projection * vec4(position.x, position.y, position.z, 1.0f);
   texcoordOutFromVert = vec2(texcoordIn.x, texcoordIn.y);
 })FOO";
 
@@ -63,3 +61,5 @@ void main()
   outColor = texel;
 }
 )FOO";
+
+global_variable GLuint shaderProgram;
