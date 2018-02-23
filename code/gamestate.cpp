@@ -4,11 +4,33 @@ inline void addTile(int x, int y, int type) {
   int location = x + y*gameState.maxTilesX;
   Tile* t = gameState.tiles + location;
   t->type = type;
+  t->entityHere = NULL;
 }
 
 inline Tile* getTile(Tile* ptr, int x, int y) {
   int location = x + y*gameState.maxTilesX;
   return ptr + location;
+}
+
+inline int getTileInt(int x, int y) {
+  return x + y*gameState.maxTilesX;
+}
+
+inline v2 getTileXY(int t) {
+  v2 v;
+  Tile* tile = gameState.tiles + t;
+  v.x = tile->x;
+  v.y = tile->y;
+  return v;
+}
+
+inline Tile* getTileFromInt(int t) {
+  return gameState.tiles + t;
+}
+
+inline int getTileEntityType(Tile* ptr, int x, int y) {
+  int location = x + y*gameState.maxTilesX;
+  return ((Entity*) ((ptr + location)->entityHere))->type;
 }
 
 void tuneTileSprites(GameState* state) {
@@ -55,38 +77,87 @@ void initializeEntityGroup(EntityGroup* group, int numEntities) {
 void setPlayerDestination(Player* playerPtr, int x, int y) {
   int type = (getTile(gameState.tiles, x, y))->type;
   if(type != TILE_SIDE_WALL && type != TILE_TOP_WALL) {
-    playerPtr->moving = true;
+    playerPtr->playerState = PS_MOVING;
     playerPtr->destination = V2(((float)x) + 0.5f, ((float)y) + 0.5f);
     playerPtr->moveDuration = 0.0f;
-    playerPtr->tileX = x;
-    playerPtr->tileY = y;
+  }
+}
+
+void setMobDestination(Entity* entPtr, int x, int y) {
+  int type = (getTile(gameState.tiles, x, y))->type;
+  if(type != TILE_SIDE_WALL && type != TILE_TOP_WALL) {
+    entPtr->state = ES_MOVING;
+    entPtr->destination = V2(((float)x) + 0.5f, ((float)y) + 0.5f);
+    entPtr->moveDuration = 0.0f;
   }
 }
 
 void updatePlayerMovement(Player* playerPtr, float dt) {
   //move player to destination
-  if(playerPtr->moving) {
+  if(playerPtr->playerState == PS_MOVING) {
     playerPtr->moveDuration += dt;
     float movePercentage =  playerPtr->moveDuration / playerSecondsPerTile;
-  //TODO: Enable for bouncy characters, but shadows are currently on each sprite, and 
-    //camera follows player center; to fix camera, strap y to player origin or dest
     float yJumpOffset = 0.0f;
     if(playerPtr->facing==FACING_LEFT || playerPtr->facing==FACING_RIGHT) {
       yJumpOffset = 0.5f * sinf(movePercentage * M_PI_2);
     }
     if(movePercentage >= 1.0f) {
-      playerPtr->moving = false;
+      playerPtr->playerState = PS_DEFENDING;
       playerPtr->origin.x = playerPtr->destination.x;
       playerPtr->origin.y = playerPtr->destination.y;
       playerPtr->moveDuration = 0.0f;
       playerPtr->center.x = playerPtr->origin.x;
       playerPtr->center.y = playerPtr->origin.y;
+      (getTile(gameState.tiles, playerPtr->tileX, playerPtr->tileY))->entityHere = NULL;
+      playerPtr->tileX = (int) playerPtr->origin.x;
+      playerPtr->tileY = (int) playerPtr->origin.y;
+      (getTile(gameState.tiles, playerPtr->tileX, playerPtr->tileY))->entityHere = (Entity*) playerPtr;
     }
     else{
       playerPtr->center.x = (1.0f - movePercentage) * playerPtr->origin.x + movePercentage*playerPtr->destination.x;
       playerPtr->center.y = (1.0f - movePercentage) * playerPtr->origin.y + movePercentage*playerPtr->destination.y + yJumpOffset;
     }
   }
+}
+
+void updateMobMovement(Entity* entPtr, float dt) {
+  if(entPtr->state == ES_MOVING) {
+    entPtr->moveDuration += dt;
+    float movePercentage =  entPtr->moveDuration / mobSecondsPerTile;
+    float yJumpOffset = 0.0f;
+    if(entPtr->facing==FACING_LEFT || entPtr->facing==FACING_RIGHT) {
+      yJumpOffset = 0.5f * sinf(movePercentage * M_PI_2);
+    }
+    if(movePercentage >= 1.0f) {
+      entPtr->state = ES_WAITING;
+      entPtr->origin.x = entPtr->destination.x;
+      entPtr->origin.y = entPtr->destination.y;
+      entPtr->moveDuration = 0.0f;
+      entPtr->centerX = entPtr->origin.x;
+      entPtr->centerY = entPtr->origin.y;
+      (getTile(gameState.tiles, entPtr->tileX, entPtr->tileY))->entityHere = NULL;
+      entPtr->tileX = (int) entPtr->origin.x;
+      entPtr->tileY = (int) entPtr->origin.y;
+      (getTile(gameState.tiles, entPtr->tileX, entPtr->tileY))->entityHere = (Entity*) entPtr;
+    }
+    else{
+      entPtr->centerX = (1.0f - movePercentage) * entPtr->origin.x + movePercentage*entPtr->destination.x;
+      entPtr->centerY = (1.0f - movePercentage) * entPtr->origin.y + movePercentage*entPtr->destination.y + yJumpOffset;
+    }
+  }
+}
+
+void initPlayer(int x, int y) {
+  player.type = E_PLAYER;
+  player.center = V2(x + .5f, y + .5f);
+  player.origin = V2(player.center.x, player.center.y);
+  player.origin = V2(player.center.x, player.center.y);
+  player.moveDuration = 0.0f;
+  player.classType = E_FIGHTER;
+  player.tileX = (int) player.center.x;
+  player.tileY = (int) player.center.y;
+  player.facing = FACING_DOWN;
+  player.playerState = PS_WAITING;
 }
 
 void initializeGameState() {
@@ -100,15 +171,7 @@ void initializeGameState() {
   gameState.flipSprites = false;
   gameState.spriteSet = 0.0f;
 
-  player.center = V2(2.5f,2.5f);
-  player.origin = V2(player.center.x, player.center.y);
-  player.origin = V2(player.center.x, player.center.y);
-  player.moveDuration = 0.0f;
-  player.classType = E_FIGHTER;
-  player.tileX = (int) player.center.x;
-  player.tileY = (int) player.center.y;
-  player.facing = FACING_DOWN;
-  player.moving = false;
+  initPlayer(2,2);
 
   Tile* tile = gameState.tiles; 
   for(int i = 0; i < gameState.maxTilesY; i++) {
@@ -130,5 +193,8 @@ void initializeGameState() {
   addTile(3,3,TILE_WALL);
   addTile(3,4,TILE_WALL);
   addTile(4,4,TILE_WALL);
+
+  (getTile(gameState.tiles, player.tileX, player.tileY))->entityHere = (Entity*) &player;
+  
   tuneTileSprites(&gameState);
 }

@@ -30,25 +30,25 @@ win32MainWindowCallback(HWND window, UINT message, WPARAM WParam, LPARAM LParam)
   if(message == WM_KEYDOWN) {
     switch(WParam) {
       case 'W': {
-        if(!player.moving){
+        if(player.playerState==PS_WAITING){
           player.facing = FACING_UP;
           setPlayerDestination(&player, player.tileX, player.tileY+1);
         }
       } break;
       case 'A': {
-        if(!player.moving){
+        if(player.playerState==PS_WAITING){
           player.facing = FACING_LEFT;
           setPlayerDestination(&player, player.tileX-1, player.tileY);
         }
       } break;
       case 'S': {
-        if(!player.moving){
+        if(player.playerState==PS_WAITING){
           player.facing = FACING_DOWN;
           setPlayerDestination(&player, player.tileX, player.tileY-1);
         }
       } break;
       case 'D': {
-        if(!player.moving){
+        if(player.playerState==PS_WAITING){
           player.facing = FACING_RIGHT;
           setPlayerDestination(&player, player.tileX+1, player.tileY);
         }
@@ -94,11 +94,7 @@ win32MainWindowCallback(HWND window, UINT message, WPARAM WParam, LPARAM LParam)
 }
 
 int CALLBACK
-WinMain(HINSTANCE instance,
-        HINSTANCE prevInstance,
-        LPSTR commandLine,
-        int showCode)
-{
+WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine, int showCode) {
   srand(time(NULL));
   WNDCLASS windowClass = {};
   windowClass.style = CS_HREDRAW|CS_VREDRAW|CS_OWNDC;
@@ -146,6 +142,8 @@ WinMain(HINSTANCE instance,
       initializeGameState();
       initializeEntityGroup(&mobEntities, 20);
       initializeRenderState();
+      initializeSim();
+      initializeMobs();
 
       LARGE_INTEGER lastCounter, counterFreq;
       char strTime[40];
@@ -160,7 +158,7 @@ WinMain(HINSTANCE instance,
       {
         LARGE_INTEGER beginCounter;
         QueryPerformanceCounter(&beginCounter);
-
+        //TODO: tracking short durations is okay...BUT LET'S NOT USE FLOATS FOR TOTAL GAME TIME THAT'S BAD
         float dif = beginCounter.QuadPart - lastCounter.QuadPart;
         float lastFrameMS = (1000 * dif) / (float)counterFreq.QuadPart;
         float lastFrameSec = dif/counterFreq.QuadPart;
@@ -185,6 +183,8 @@ WinMain(HINSTANCE instance,
         }
 
         updatePlayerMovement(&player, lastFrameSec);
+        mobUpdate(&mobEntities, &player, lastFrameSec);
+
         //update sprite idle animations
         spriteFlipCounter += lastFrameSec;
         if(spriteFlipCounter > idleFlipTime) {
@@ -226,6 +226,8 @@ WinMain(HINSTANCE instance,
 
         glBindBuffer(GL_ARRAY_BUFFER, tileSprites.vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tileSprites.ebo);
+        tileSprites.posAttrib = glGetAttribLocation(shaderProgram, "position");
+        tileSprites.texAttrib = glGetAttribLocation(shaderProgram, "texcoordIn");
         glVertexAttribPointer(tileSprites.posAttrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
         glEnableVertexAttribArray(tileSprites.posAttrib);
         glVertexAttribPointer(tileSprites.texAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
@@ -234,18 +236,25 @@ WinMain(HINSTANCE instance,
         
         glBindBuffer(GL_ARRAY_BUFFER, mobSprites.vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mobSprites.ebo);
+        mobSprites.posAttrib = glGetAttribLocation(shaderProgram, "position");
+        mobSprites.texAttrib = glGetAttribLocation(shaderProgram, "texcoordIn");
         glVertexAttribPointer(mobSprites.posAttrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
         glEnableVertexAttribArray(mobSprites.posAttrib);
         glVertexAttribPointer(mobSprites.texAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
         glEnableVertexAttribArray(mobSprites.texAttrib);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*20*mobEntities.count, mobSprites.vertBase);
+        glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(float)*mobSprites.indexArrayCurrentSize, mobSprites.indexBase);
         glDrawElements(GL_TRIANGLES, mobSprites.indexArrayCurrentSize, GL_UNSIGNED_INT, 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, playerSprite.vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerSprite.ebo);
+        playerSprite.posAttrib = glGetAttribLocation(shaderProgram, "position");
+        playerSprite.texAttrib = glGetAttribLocation(shaderProgram, "texcoordIn");
         glVertexAttribPointer(playerSprite.posAttrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
         glEnableVertexAttribArray(playerSprite.posAttrib);
         glVertexAttribPointer(playerSprite.texAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
         glEnableVertexAttribArray(playerSprite.texAttrib);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*20, playerSprite.vertBase);
         glDrawElements(GL_TRIANGLES, playerSprite.indexArrayCurrentSize, GL_UNSIGNED_INT, 0);
 
         glFinish();

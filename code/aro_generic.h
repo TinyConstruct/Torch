@@ -28,6 +28,9 @@ void reportAssertionFailure(char* expr, char* file, int line) {
 
 #define InvalidCodePath assert(!1==1)
 
+#define megabyte(amnt) amnt*1000000
+
+
 uint32 safeTruncateUInt64(uint64 value)
 {
     assert(value <= 0xFFFFFFFF);

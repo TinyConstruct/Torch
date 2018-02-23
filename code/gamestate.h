@@ -6,18 +6,25 @@ global_variable float tileSideLength = 1.0f;
 global_variable float numVerticalTiles = 12.50f;
 global_variable float numHorizontalTiles = 20.0f;
 global_variable float playerSecondsPerTile = .15f;
+global_variable float mobSecondsPerTile = .15f;
 global_variable float idleFlipTime = .75f;
 
 /////// ENTITY STRUCTURES ///////////////////
 
 enum Facing {FACING_RIGHT = 0, FACING_DOWN = 1,FACING_UP = 2, FACING_LEFT =3};
-enum EntityType {E_FIGHTER, E_CAT, };
+enum EntityType {E_PLAYER=1, E_FIGHTER, E_CAT, };
+enum PlayerState {PS_MOVING, PS_DEFENDING, PS_WAITING};
+enum EntityState {ES_MOVING, ES_WAITING, ES_HUNTING};
+enum TileTypes {
+  TILE_FLOOR, TILE_WALL, TILE_TOP_WALL, TILE_SIDE_WALL,
+};
 struct GameObject {
   float width, height;
   v2 center;
 };
 
 struct Player {
+  int type;
   float hp;
   v2 center;
   v2 origin, destination;
@@ -26,16 +33,26 @@ struct Player {
   int classType;
   int tileX, tileY;
   int facing;
-  bool moving;
+  int playerState;
 };
 
-enum TileTypes {
-  TILE_FLOOR, TILE_WALL, TILE_TOP_WALL, TILE_SIDE_WALL,
+struct Entity {
+  int type;
+  float hp;
+  float centerX, centerY;
+  v2 origin, destination;   
+  float moveDuration;
+  float uvX, uvY;
+  int tileX, tileY;
+  int facing;
+  int state;
+  float lastSawPlayerX, lastSawPlayerY;
 };
 
 struct Tile {
   int32 x, y;
   int type;
+  Entity* entityHere;
 };
 
 struct GameState {
@@ -47,11 +64,6 @@ struct GameState {
   float spriteSet;
 };
 
-struct Entity {
-  int type, facing;
-  float centerX, centerY;
-  float uvX, uvY;
-};
 
 
 struct EntityGroup {

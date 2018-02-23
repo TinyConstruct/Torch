@@ -119,8 +119,8 @@ void updateQuadRenderGroupSprites(RenderGroup* sprites, EntityGroup* entities) {
     writePointer++;    
     entityPointer++;
     //TODO: make whole buffer update at once? Or is this asynchronous in any way?
-    glBufferSubData(GL_ARRAY_BUFFER, i*quadByteOffset , quadByteOffset, quadStart);
   }
+    
 }
 
 void updatePlayerSprite(RenderGroup* spritePtr, Player* playerPtr) {
@@ -190,10 +190,7 @@ void updatePlayerSprite(RenderGroup* spritePtr, Player* playerPtr) {
   writePointer++;
   *writePointer = uvY - TILE_UV_OFFSET*spriteSet - TILE_UV_OFFSET;
   writePointer++;    
-  glBufferSubData(GL_ARRAY_BUFFER, 0, quadByteOffset, quadStart);
 }
-
-
 
 float* addQuadToRenderGroup(RenderGroup* group, float x, float y, float z, float s, float t) {
   uint32 count = group->currentEntityCount;
@@ -302,17 +299,18 @@ v2 entityTypeToUpperUV(int type) {
     } break;
   }
 }
-
-void createEntity(EntityGroup* entityGroup, RenderGroup* renderGroup, int entityType, float x, float y) {
+void createEntity(EntityGroup* entityGroup, RenderGroup* renderGroup, int entityType, int x, int y) {
   assert(entityGroup->count + 1 < entityGroup->max);
   Entity* e = entityGroup->base + entityGroup->count;
   e->type = entityType;
-  e->facing = FACING_DOWN;
   e->centerX = x + TILE_SPACE_CENTER_OFFSET;
   e->centerY = y + TILE_SPACE_CENTER_OFFSET;
+  e->origin = V2(e->centerX, e->centerY);
+  e->destination = V2(e->centerX, e->centerY);
   v2 uv = entityTypeToUpperUV(entityType);
   e->uvX = uv.x;
   e->uvY = uv.y;
+  e->facing = FACING_DOWN;
   entityGroup->count++;
   addQuadToRenderGroup(renderGroup, e->centerX, e->centerY, 0.5f, e->uvX, e->uvY);
 }
@@ -330,7 +328,6 @@ void initializeRenderState() {
 
   v2 uv = entityTypeToUpperUV(player.classType);
   addQuadToRenderGroup(&playerSprite, player.center.x, player.center.y, 0.5f, uv.x, uv.y);
-  //createEntity(&mobEntities, &mobSprites, E_FIGHTER, 0,0);
   
   Tile* tile = gameState.tiles; 
   for(float i = 0.0f; i < gameState.maxTilesY; i++) {
