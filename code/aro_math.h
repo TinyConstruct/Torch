@@ -15,6 +15,26 @@ Points are vectors where the fourth component (w) is 1 by default
 #define degToRad(a)  ((a)*(M_PI/180))
 #define radToDeg(a)  ((a)*(180/M_PI))
 
+int clamp(int in, int min, int max) {
+  if(in < min) {
+    return min;
+  }
+  if(in > max) {
+    return max;
+  }
+  return in;
+}
+
+float clamp(float in, float min, float max) {
+  if(in < min) {
+    return min;
+  }
+  if(in > max) {
+    return max;
+  }
+  return in;
+}
+
 ////////////// V2 ////////////////////////////////
 struct v2 {
   float x,y;
@@ -74,6 +94,31 @@ inline v2 normalize(const v2& v) {
   return (v/magnitude(v));
 }
 
+//TODO: are integer vectors a good idea???
+struct v2i {
+  int x,y;
+};
+
+inline v2i V2i(float X, float Y) {
+  v2i v;
+  v.x = X; 
+  v.y = Y;
+  return v;
+}
+
+inline v2i operator+(v2i a, v2i b) {
+  v2i result; 
+  result.x = a.x + b.x;
+  result.y = a.y + b.y;
+  return result;
+}
+
+inline v2i operator-(v2i a, v2i b) {
+  v2i result; 
+  result.x = a.x - b.x;
+  result.y = a.y - b.y;
+  return result;
+}
 
 ////////////// V3 ////////////////////////////////
 struct v3 {

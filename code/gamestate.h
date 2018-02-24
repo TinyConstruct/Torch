@@ -12,12 +12,13 @@ global_variable float idleFlipTime = .75f;
 /////// ENTITY STRUCTURES ///////////////////
 
 enum Facing {FACING_RIGHT = 0, FACING_DOWN = 1,FACING_UP = 2, FACING_LEFT =3};
-enum EntityType {E_PLAYER=1, E_FIGHTER, E_CAT, };
+enum EntityType {E_PLAYER=1, E_FIGHTER, E_CAT, GOBLIN_SWORD,};
 enum PlayerState {PS_MOVING, PS_DEFENDING, PS_WAITING};
-enum EntityState {ES_MOVING, ES_WAITING, ES_HUNTING};
+enum EntityState {ES_MOVING, ES_DEFENDING, ES_WAITING, ES_HUNTING};
 enum TileTypes {
   TILE_FLOOR, TILE_WALL, TILE_TOP_WALL, TILE_SIDE_WALL,
 };
+enum Turn {PLAYER_TURN, MONSTER_TURN,};
 struct GameObject {
   float width, height;
   v2 center;
@@ -57,14 +58,13 @@ struct Tile {
 
 struct GameState {
   v2 cameraCenter;
+  int turn;
   int maxTilesX;
   int maxTilesY;
   Tile* tiles;
   bool flipSprites;
   float spriteSet;
 };
-
-
 
 struct EntityGroup {
   int count, max;

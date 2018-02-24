@@ -1,4 +1,7 @@
 #include "gamestate.h"
+inline bool tileIsEmpty(Tile* t) {
+  return(!t->entityHere);
+}
 
 inline void addTile(int x, int y, int type) {
   int location = x + y*gameState.maxTilesX;
@@ -76,20 +79,15 @@ void initializeEntityGroup(EntityGroup* group, int numEntities) {
 
 void setPlayerDestination(Player* playerPtr, int x, int y) {
   int type = (getTile(gameState.tiles, x, y))->type;
-  if(type != TILE_SIDE_WALL && type != TILE_TOP_WALL) {
-    playerPtr->playerState = PS_MOVING;
-    playerPtr->destination = V2(((float)x) + 0.5f, ((float)y) + 0.5f);
-    playerPtr->moveDuration = 0.0f;
-  }
+  playerPtr->playerState = PS_MOVING;
+  playerPtr->destination = V2(((float)x) + 0.5f, ((float)y) + 0.5f);
+  playerPtr->moveDuration = 0.0f;
 }
 
 void setMobDestination(Entity* entPtr, int x, int y) {
-  int type = (getTile(gameState.tiles, x, y))->type;
-  if(type != TILE_SIDE_WALL && type != TILE_TOP_WALL) {
-    entPtr->state = ES_MOVING;
-    entPtr->destination = V2(((float)x) + 0.5f, ((float)y) + 0.5f);
-    entPtr->moveDuration = 0.0f;
-  }
+  entPtr->state = ES_MOVING;
+  entPtr->destination = V2(((float)x) + 0.5f, ((float)y) + 0.5f);
+  entPtr->moveDuration = 0.0f;
 }
 
 void updatePlayerMovement(Player* playerPtr, float dt) {
@@ -102,6 +100,7 @@ void updatePlayerMovement(Player* playerPtr, float dt) {
       yJumpOffset = 0.5f * sinf(movePercentage * M_PI_2);
     }
     if(movePercentage >= 1.0f) {
+      gameState.turn = MONSTER_TURN;
       playerPtr->playerState = PS_DEFENDING;
       playerPtr->origin.x = playerPtr->destination.x;
       playerPtr->origin.y = playerPtr->destination.y;
@@ -121,29 +120,27 @@ void updatePlayerMovement(Player* playerPtr, float dt) {
 }
 
 void updateMobMovement(Entity* entPtr, float dt) {
-  if(entPtr->state == ES_MOVING) {
-    entPtr->moveDuration += dt;
-    float movePercentage =  entPtr->moveDuration / mobSecondsPerTile;
-    float yJumpOffset = 0.0f;
-    if(entPtr->facing==FACING_LEFT || entPtr->facing==FACING_RIGHT) {
-      yJumpOffset = 0.5f * sinf(movePercentage * M_PI_2);
-    }
-    if(movePercentage >= 1.0f) {
-      entPtr->state = ES_WAITING;
-      entPtr->origin.x = entPtr->destination.x;
-      entPtr->origin.y = entPtr->destination.y;
-      entPtr->moveDuration = 0.0f;
-      entPtr->centerX = entPtr->origin.x;
-      entPtr->centerY = entPtr->origin.y;
-      (getTile(gameState.tiles, entPtr->tileX, entPtr->tileY))->entityHere = NULL;
-      entPtr->tileX = (int) entPtr->origin.x;
-      entPtr->tileY = (int) entPtr->origin.y;
-      (getTile(gameState.tiles, entPtr->tileX, entPtr->tileY))->entityHere = (Entity*) entPtr;
-    }
-    else{
-      entPtr->centerX = (1.0f - movePercentage) * entPtr->origin.x + movePercentage*entPtr->destination.x;
-      entPtr->centerY = (1.0f - movePercentage) * entPtr->origin.y + movePercentage*entPtr->destination.y + yJumpOffset;
-    }
+  entPtr->moveDuration += dt;
+  float movePercentage =  entPtr->moveDuration / mobSecondsPerTile;
+  float yJumpOffset = 0.0f;
+  if(entPtr->facing==FACING_LEFT || entPtr->facing==FACING_RIGHT) {
+    yJumpOffset = 0.5f * sinf(movePercentage * M_PI_2);
+  }
+  if(movePercentage >= 1.0f) {
+    entPtr->state = ES_WAITING;
+    entPtr->origin.x = entPtr->destination.x;
+    entPtr->origin.y = entPtr->destination.y;
+    entPtr->moveDuration = 0.0f;
+    entPtr->centerX = entPtr->origin.x;
+    entPtr->centerY = entPtr->origin.y;
+    (getTile(gameState.tiles, entPtr->tileX, entPtr->tileY))->entityHere = NULL;
+    entPtr->tileX = (int) entPtr->origin.x;
+    entPtr->tileY = (int) entPtr->origin.y;
+    (getTile(gameState.tiles, entPtr->tileX, entPtr->tileY))->entityHere = (Entity*) entPtr;
+  }
+  else{
+    entPtr->centerX = (1.0f - movePercentage) * entPtr->origin.x + movePercentage*entPtr->destination.x;
+    entPtr->centerY = (1.0f - movePercentage) * entPtr->origin.y + movePercentage*entPtr->destination.y + yJumpOffset;
   }
 }
 
@@ -163,8 +160,9 @@ void initPlayer(int x, int y) {
 void initializeGameState() {
   gameState.cameraCenter.x = 0;
   gameState.cameraCenter.y = 0;
-  gameState.maxTilesX = 8;
-  gameState.maxTilesY = 8;
+  gameState.turn = PLAYER_TURN;
+  gameState.maxTilesX = 15;
+  gameState.maxTilesY = 15;
   gameState.tiles = (Tile*)VirtualAlloc(0, gameState.maxTilesX*gameState.maxTilesX*sizeof(Tile),
    MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
   assert(gameState.tiles!=NULL);
@@ -190,9 +188,9 @@ void initializeGameState() {
       tile++;
     }     
   }
-  addTile(3,3,TILE_WALL);
-  addTile(3,4,TILE_WALL);
-  addTile(4,4,TILE_WALL);
+  //addTile(3,3,TILE_WALL);
+  //addTile(3,4,TILE_WALL);
+  //addTile(4,4,TILE_WALL);
 
   (getTile(gameState.tiles, player.tileX, player.tileY))->entityHere = (Entity*) &player;
   

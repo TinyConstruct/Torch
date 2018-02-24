@@ -27,30 +27,30 @@ global_variable Win32WindowDimensions globalWindowDimensions;
 LRESULT CALLBACK
 win32MainWindowCallback(HWND window, UINT message, WPARAM WParam, LPARAM LParam) {       
   LRESULT result = 0;
-  if(message == WM_KEYDOWN) {
+  if(message == WM_KEYDOWN && gameState.turn != MONSTER_TURN) {
     switch(WParam) {
       case 'W': {
         if(player.playerState==PS_WAITING){
           player.facing = FACING_UP;
-          setPlayerDestination(&player, player.tileX, player.tileY+1);
+          handlePlayerMove(&player, player.tileX, player.tileY+1);
         }
       } break;
       case 'A': {
         if(player.playerState==PS_WAITING){
           player.facing = FACING_LEFT;
-          setPlayerDestination(&player, player.tileX-1, player.tileY);
+          handlePlayerMove(&player, player.tileX-1, player.tileY);
         }
       } break;
       case 'S': {
         if(player.playerState==PS_WAITING){
           player.facing = FACING_DOWN;
-          setPlayerDestination(&player, player.tileX, player.tileY-1);
+          handlePlayerMove(&player, player.tileX, player.tileY-1);
         }
       } break;
       case 'D': {
         if(player.playerState==PS_WAITING){
           player.facing = FACING_RIGHT;
-          setPlayerDestination(&player, player.tileX+1, player.tileY);
+          handlePlayerMove(&player, player.tileX+1, player.tileY);
         }
       } break;
       case VK_ESCAPE: {
@@ -162,7 +162,7 @@ WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine, int showC
         float dif = beginCounter.QuadPart - lastCounter.QuadPart;
         float lastFrameMS = (1000 * dif) / (float)counterFreq.QuadPart;
         float lastFrameSec = dif/counterFreq.QuadPart;
-        //sprintf_s(strTime, 40, "last frame:%f\n", lastFrameMS);
+        //sprintf_s(strTime, 40, "turn:%f\n", gameState.turn);
         //OutputDebugString(strTime);
 
         float fps = (float) counterFreq.QuadPart / (float)dif;
