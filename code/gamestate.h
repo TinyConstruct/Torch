@@ -12,6 +12,7 @@ global_variable float idleFlipTime = .75f;
 /////// ENTITY STRUCTURES ///////////////////
 
 enum Facing {FACING_RIGHT = 0, FACING_DOWN = 1,FACING_UP = 2, FACING_LEFT =3};
+enum Direction {DIR_RIGHT = 0, DIR_DOWN = 1, DIR_UP = 2, DIR_LEFT = 3};
 enum EntityType {E_PLAYER=1, E_FIGHTER, E_CAT, GOBLIN_SWORD,};
 enum PlayerState {PS_MOVING, PS_DEFENDING, PS_WAITING};
 enum EntityState {ES_MOVING, ES_DEFENDING, ES_WAITING, ES_HUNTING};
@@ -53,6 +54,7 @@ struct Entity {
 struct Tile {
   int32 x, y;
   int type;
+  int32 navListNum; 
   Entity* entityHere;
 };
 
@@ -61,6 +63,8 @@ struct GameState {
   int turn;
   int maxTilesX;
   int maxTilesY;
+  int maxMinHeapNodes;
+  int currentAStarNum;
   Tile* tiles;
   bool flipSprites;
   float spriteSet;
@@ -69,6 +73,15 @@ struct GameState {
 struct EntityGroup {
   int count, max;
   Entity* base;
+};
+
+struct TileMinHeapNode {
+  int costFromStart, hCost, dir;
+  Tile* tile;
+};
+struct TileMinHeap {
+  int count, max;
+  TileMinHeapNode* head;  
 };
 
 global_variable EntityGroup mobEntities;

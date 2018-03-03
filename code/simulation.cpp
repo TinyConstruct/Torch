@@ -24,12 +24,6 @@ void initializeMobs() {
   //createEntity(&mobEntities, &mobSprites, GOBLIN_SWORD, 5,6);
 }
 
-inline int manhattanCostToTile(int from, int to) {
-  v2 f = getTileXY(from);
-  v2 t = getTileXY(to);
-  return abs(f.x - t.x) + abs(f.y - t.y);
-}
-
 bool monsterAttackCheck(Entity* mob, Tile** t) {
   Tile* temp = getTile(gameState.tiles, mob->tileX-1, mob->tileY);
   if(!tileIsEmpty(temp) && (temp->entityHere)->type == E_PLAYER) {
@@ -54,7 +48,92 @@ bool monsterAttackCheck(Entity* mob, Tile** t) {
   return false;
 }
 
+v2i dirToUnitVec(int dir) {
+  switch(dir) {
+    case DIR_UP:
+      return V2i(0,1); break;
+    case DIR_DOWN:
+      return V2i(0,-1); break;
+    case DIR_LEFT:
+      return V2i(1,0); break;
+    case DIR_RIGHT:
+      return V2i(1,0); break;
+    default: 
+      return V2i(0,0); break;
+  }
+}
+
+inline void aStarListCheck(Tile* neighbor, int xTarget, int yTarget, int dir) {
+  int neighborCrossCost =  getTileCrossingCost(neighbor);
+  int neighborH = manhattanCostToTile(neighbor->x, neighbor->y, xTarget, yTarget);
+  if(neighborCrossCost>=0 && neighbor->navListNum!=(gameState.currentAStarNum+1)){
+    if(neighbor->navListNum!=gameState.currentAStarNum) {
+      insertTileMinHeap(simMinHeap, neighborH, neighborCrossCost, neighbor, dir);
+      neighbor->navListNum = gameState.currentAStarNum;
+    }
+    else {
+      //TODO: fix this
+    }
+  }
+}
+
 v2i AStarToTile(Entity* start, int xTarget, int yTarget) { 
+//Assumption: the max tile dimension is always a wall, and therefore assumed blocked.
+  initializeTileMinHeap(simMinHeap, gameState.maxMinHeapNodes, (TileMinHeapNode*)&((TileMinHeap)*simMinHeap) + 1);
+  Tile* targetTile = getTile(gameState.tiles, xTarget, yTarget);
+  Tile* startTile = getTile(gameState.tiles, start->tileX, start->tileY);
+  startTile->navListNum = gameState.currentAStarNum + 1; //add to closed list
+
+  Tile* neighbor = getTile(gameState.tiles, start->tileX - 1, start->tileY);
+  int neighborCrossCost =  getTileCrossingCost(neighbor);
+  int neighborH = manhattanCostToTile(neighbor->x, neighbor->y, xTarget, yTarget);
+  if(neighborCrossCost>=0){
+    insertTileMinHeap(simMinHeap, neighborH, neighborCrossCost, neighbor, DIR_LEFT);
+    neighbor->navListNum = gameState.currentAStarNum;
+  }
+  neighbor = getTile(gameState.tiles, start->tileX+1, start->tileY);
+  neighborCrossCost =  getTileCrossingCost(neighbor);
+  neighborH = manhattanCostToTile(neighbor->x, neighbor->y, xTarget, yTarget);
+  if(neighborCrossCost>=0){
+    insertTileMinHeap(simMinHeap, neighborH, neighborCrossCost, neighbor, DIR_RIGHT);
+    neighbor->navListNum = gameState.currentAStarNum;
+  }
+  neighbor = getTile(gameState.tiles, start->tileX, start->tileY+1);
+  neighborCrossCost =  getTileCrossingCost(neighbor);
+  neighborH = manhattanCostToTile(neighbor->x, neighbor->y, xTarget, yTarget);
+  if(neighborCrossCost>=0){
+    insertTileMinHeap(simMinHeap, neighborH, neighborCrossCost, neighbor, DIR_UP);
+    neighbor->navListNum = gameState.currentAStarNum;
+  }
+  neighbor = getTile(gameState.tiles, start->tileX-1, start->tileY);
+  neighborCrossCost =  getTileCrossingCost(neighbor);
+  neighborH = manhattanCostToTile(neighbor->x, neighbor->y, xTarget, yTarget);
+  if(neighborCrossCost>=0){
+    insertTileMinHeap(simMinHeap, neighborH, neighborCrossCost, neighbor, DIR_DOWN);
+    neighbor->navListNum = gameState.currentAStarNum;
+  }
+
+  while(simMinHeap->count > 0) {
+    TileMinHeapNode* least = popTileMinHeap(simMinHeap);
+    least->tile->navListNum++;
+    if(least->tile == targetTile) {
+      return dirToUnitVec(least->dir);
+      gameState.currentAStarNum += 2;
+    }
+    neighbor = getTile(gameState.tiles, start->tileX-1, start->tileY);
+    aStarListCheck(neighbor, xTarget, yTarget, least->dir);
+    neighbor = getTile(gameState.tiles, start->tileX+1, start->tileY);
+    aStarListCheck(neighbor, xTarget, yTarget, least->dir);
+    neighbor = getTile(gameState.tiles, start->tileX, start->tileY-1);
+    aStarListCheck(neighbor, xTarget, yTarget, least->dir);
+    neighbor = getTile(gameState.tiles, start->tileX, start->tileY+1);
+    aStarListCheck(neighbor, xTarget, yTarget, least->dir);
+  }
+  gameState.currentAStarNum += 2;
+  return V2i(0,0);
+}
+
+v2i naiveMove(Entity* start, int xTarget, int yTarget) { 
   //Assumption: the max tile dimension is always a wall, and therefore assumed blocked.
   //int start = getTileInt(start->x, start->y);
   //int end = getTileInt(target->x, target->y);
@@ -187,8 +266,6 @@ void mobUpdate(EntityGroup* mobEntities, Player* playerPtr, float dt) {
         default:
         break;
       }
-
-
       //TODO: if mob can see player, set last seen
       //TODO: regardless of whether can see player, set dest to lastSeen if it's not negative
       //TODO: run A* to find tile that is next step toward player
@@ -228,4 +305,10 @@ void initializeSim() {
    MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
   simulationSwapSpace.sizeInBytes = megabyte(5);
   assert(simulationSwapSpace.space != NULL);
+  gameState.maxMinHeapNodes = gameState.maxTilesX*gameState.maxTilesY;
+  gameState.currentAStarNum = 1;
+  TileMinHeap* minHeap = (TileMinHeap*)simulationSwapSpace.space;
+  int minHeapSize = sizeof(TileMinHeap) + sizeof(TileMinHeapNode)*minHeap->max;
+  assert((minHeapSize - simulationSwapSpace.sizeInBytes) <= 0);
+
 }

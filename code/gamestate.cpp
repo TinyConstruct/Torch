@@ -8,6 +8,7 @@ inline void addTile(int x, int y, int type) {
   Tile* t = gameState.tiles + location;
   t->type = type;
   t->entityHere = NULL;
+  t->navListNum = 0;
 }
 
 inline Tile* getTile(Tile* ptr, int x, int y) {
@@ -67,6 +68,115 @@ void tuneTileSprites(GameState* state) {
       }
       currentTile++;
     }
+  }
+}
+
+inline int manhattanCostToTile(int from, int to) {
+  v2 f = getTileXY(from);
+  v2 t = getTileXY(to);
+  return abs(f.x - t.x) + abs(f.y - t.y);
+}
+
+inline int manhattanCostToTile(int fromX, int fromY, int toX, int toY) {
+  return abs(fromX - toX) + abs(fromY - toY);
+}
+
+int getTileCrossingCost(Tile* t) {
+  switch(t->type) {
+    case TILE_WALL:
+    case TILE_TOP_WALL:
+    case TILE_SIDE_WALL:
+      return -1; break;
+    default:
+      return 1; break;
+  }
+}
+
+inline void initializeTileMinHeap(TileMinHeap* heap, int max, TileMinHeapNode* ptr) {
+  heap->max = max;
+  heap->head = ptr;
+}
+
+void swap(TileMinHeapNode* a, TileMinHeapNode* b) {
+  TileMinHeapNode temp;
+  temp.tile = a->tile;
+  temp.costFromStart = a->costFromStart;
+  temp.hCost = a->hCost;
+  temp.dir = a->dir;
+  a->tile = b->tile;
+  a->costFromStart = b->costFromStart;
+  a->hCost = b->hCost;
+  a->dir = b->dir;
+  b->tile = temp.tile;
+  b->costFromStart = temp.costFromStart;
+  b->hCost = temp.hCost;
+  b->dir = temp.dir;
+}
+
+void insertTileMinHeap(TileMinHeap* heap, int hCost, int costFromStart, Tile* tile, int dir) {
+  heap->count++;
+  if(heap->count <= heap->max){
+    int pos = heap->count;
+    TileMinHeapNode* curPtr = heap->head + pos; //insert new node onto end, then compare with parents
+    curPtr->costFromStart = costFromStart;
+    curPtr->hCost = hCost;
+    curPtr->dir = dir;
+    curPtr->tile = tile;
+    pos = pos/2;
+    TileMinHeapNode* parentPtr = heap->head + pos;
+    while (pos != 0 && (parentPtr->costFromStart + parentPtr->hCost) > (costFromStart + hCost)){
+      swap(curPtr, parentPtr);
+      curPtr = heap->head + pos;
+      pos = pos/2;
+      parentPtr = heap->head + pos;
+    }
+  }
+  else{InvalidCodePath;}
+}
+
+void minHeapify(TileMinHeap* heap, int i) {
+  int leftChildOffset = i*2;
+  int rightChildOffset = i*2+1;
+  int smallestIndex = 0;
+  TileMinHeapNode* rootNode = heap->head + i;
+  TileMinHeapNode* leftChild = heap->head + leftChildOffset;
+  TileMinHeapNode* rightChild = leftChild+1;
+  TileMinHeapNode* smallest = NULL; 
+  if(leftChildOffset <= heap->max && (leftChild->costFromStart + leftChild->hCost) < 
+      rootNode->costFromStart + rootNode->hCost) {
+    smallest = leftChild;
+    smallestIndex = leftChildOffset;
+  }
+  else{
+    smallest = rootNode;
+  }
+  if(rightChildOffset <= heap->max && (rightChild->costFromStart + rightChild->hCost) < 
+      rootNode->costFromStart + rootNode->hCost) {
+    smallest = rightChild;
+    smallestIndex = rightChildOffset;
+  }
+  if(smallest != rootNode) {
+    swap(smallest, rootNode);
+    minHeapify(heap, smallestIndex);
+  }
+}
+
+TileMinHeapNode* popTileMinHeap(TileMinHeap* heap) {
+  if(heap->count > 1) {
+    TileMinHeapNode* root = (heap->head + 1);
+    TileMinHeapNode* leaf = heap->head + heap->count;
+    swap(root, leaf);
+    heap->count--;
+    minHeapify(heap, 1);
+    return leaf;
+  }
+  else if (heap->count == 1) {
+    TileMinHeapNode* root = (heap->head + 1);
+    heap->count--;
+    return root;
+  }
+  else{
+    return NULL;
   }
 }
 
@@ -188,10 +298,6 @@ void initializeGameState() {
       tile++;
     }     
   }
-  //addTile(3,3,TILE_WALL);
-  //addTile(3,4,TILE_WALL);
-  //addTile(4,4,TILE_WALL);
-
   (getTile(gameState.tiles, player.tileX, player.tileY))->entityHere = (Entity*) &player;
   
   tuneTileSprites(&gameState);

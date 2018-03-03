@@ -37,3 +37,6 @@ uint32 safeTruncateUInt64(uint64 value)
     uint32 result = (uint32)value;
     return(result);
 }
+
+
+

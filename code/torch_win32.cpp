@@ -103,7 +103,7 @@ WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine, int showC
   //  windowClass.hIcon = ;
   windowClass.hCursor = LoadCursor(NULL, IDC_ARROW); 
   //ShowCursor(FALSE);
-  windowClass.lpszClassName = "Learn OpenGL";
+  windowClass.lpszClassName = "Torch";
   if(RegisterClassA(&windowClass))
   {
   //drawable area 1280x800
@@ -115,7 +115,7 @@ WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine, int showC
     if(!AdjustWindowRectEx(&clientRect, WS_OVERLAPPEDWINDOW|WS_VISIBLE, FALSE, NULL)){ 
       InvalidCodePath;
     }
-    HWND window = CreateWindowExA(0, windowClass.lpszClassName, "Learn OpenGL",
+    HWND window = CreateWindowExA(0, windowClass.lpszClassName, "Torch",
         WS_OVERLAPPEDWINDOW|WS_VISIBLE, clientRect.left, clientRect.top,
         clientRect.right - clientRect.left, clientRect.bottom - clientRect.top,
         0, 0, instance, 0);
@@ -143,6 +143,10 @@ WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine, int showC
       initializeEntityGroup(&mobEntities, 20);
       initializeRenderState();
       initializeSim();
+      simMinHeap = (TileMinHeap*)simulationSwapSpace.space;
+      initializeTileMinHeap(simMinHeap, 20, (TileMinHeapNode*)&((TileMinHeap)*simMinHeap) + 1);
+      
+
       initializeMobs();
 
       LARGE_INTEGER lastCounter, counterFreq;
