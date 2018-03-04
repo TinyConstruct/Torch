@@ -95,6 +95,7 @@ int getTileCrossingCost(Tile* t) {
 inline void initializeTileMinHeap(TileMinHeap* heap, int max, TileMinHeapNode* ptr) {
   heap->max = max;
   heap->head = ptr;
+  heap->count = 0;
 }
 
 void swap(TileMinHeapNode* a, TileMinHeapNode* b) {
@@ -142,7 +143,7 @@ void minHeapify(TileMinHeap* heap, int i) {
   TileMinHeapNode* leftChild = heap->head + leftChildOffset;
   TileMinHeapNode* rightChild = leftChild+1;
   TileMinHeapNode* smallest = NULL; 
-  if(leftChildOffset <= heap->max && (leftChild->costFromStart + leftChild->hCost) < 
+  if(leftChildOffset <= heap->count && (leftChild->costFromStart + leftChild->hCost) < 
       rootNode->costFromStart + rootNode->hCost) {
     smallest = leftChild;
     smallestIndex = leftChildOffset;
@@ -150,7 +151,7 @@ void minHeapify(TileMinHeap* heap, int i) {
   else{
     smallest = rootNode;
   }
-  if(rightChildOffset <= heap->max && (rightChild->costFromStart + rightChild->hCost) < 
+  if(rightChildOffset <= heap->count && (rightChild->costFromStart + rightChild->hCost) < 
       rootNode->costFromStart + rootNode->hCost) {
     smallest = rightChild;
     smallestIndex = rightChildOffset;

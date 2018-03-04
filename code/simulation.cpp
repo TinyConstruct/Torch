@@ -116,17 +116,20 @@ v2i AStarToTile(Entity* start, int xTarget, int yTarget) {
   while(simMinHeap->count > 0) {
     TileMinHeapNode* least = popTileMinHeap(simMinHeap);
     least->tile->navListNum++;
+    Tile* current = &(*least->tile);
     if(least->tile == targetTile) {
+	  gameState.currentAStarNum += 2;
       return dirToUnitVec(least->dir);
-      gameState.currentAStarNum += 2;
     }
-    neighbor = getTile(gameState.tiles, start->tileX-1, start->tileY);
+    least->hCost = -1;
+    least->costFromStart = -1;
+    neighbor = getTile(gameState.tiles, current->x-1, current->y);
     aStarListCheck(neighbor, xTarget, yTarget, least->dir);
-    neighbor = getTile(gameState.tiles, start->tileX+1, start->tileY);
+    neighbor = getTile(gameState.tiles, current->x+1, current->y);
     aStarListCheck(neighbor, xTarget, yTarget, least->dir);
-    neighbor = getTile(gameState.tiles, start->tileX, start->tileY-1);
+    neighbor = getTile(gameState.tiles, current->x, current->y-1);
     aStarListCheck(neighbor, xTarget, yTarget, least->dir);
-    neighbor = getTile(gameState.tiles, start->tileX, start->tileY+1);
+    neighbor = getTile(gameState.tiles, current->x, current->y+1);
     aStarListCheck(neighbor, xTarget, yTarget, least->dir);
   }
   gameState.currentAStarNum += 2;
