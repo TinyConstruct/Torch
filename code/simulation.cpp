@@ -55,7 +55,7 @@ v2i dirToUnitVec(int dir) {
     case DIR_DOWN:
       return V2i(0,-1); break;
     case DIR_LEFT:
-      return V2i(1,0); break;
+      return V2i(-1,0); break;
     case DIR_RIGHT:
       return V2i(1,0); break;
     default: 
@@ -63,23 +63,38 @@ v2i dirToUnitVec(int dir) {
   }
 }
 
-inline void aStarListCheck(Tile* neighbor, int xTarget, int yTarget, int dir) {
+inline void aStarListCheck(Tile* neighbor, int parentCost, int xTarget, int yTarget, int dir) {
   int neighborCrossCost =  getTileCrossingCost(neighbor);
   int neighborH = manhattanCostToTile(neighbor->x, neighbor->y, xTarget, yTarget);
   if(neighborCrossCost>=0 && neighbor->navListNum!=(gameState.currentAStarNum+1)){
+    neighborCrossCost += parentCost;
     if(neighbor->navListNum!=gameState.currentAStarNum) {
       insertTileMinHeap(simMinHeap, neighborH, neighborCrossCost, neighbor, dir);
       neighbor->navListNum = gameState.currentAStarNum;
     }
     else {
-      //TODO: fix this
+      //Is in open list, check if this is a shorter path
+      TileMinHeapNode* currentNode = simMinHeap->head + 1;
+      for(int i = 1; i <= simMinHeap->count; i++) {
+        TileMinHeapNode* currentNode = simMinHeap->head + i;
+        if(currentNode->tile == neighbor) {
+          if((currentNode->costFromStart + currentNode->hCost) > (neighborCrossCost + neighborH)) {
+            //update node to more efficient path
+            currentNode->costFromStart = neighborCrossCost;
+            currentNode->hCost = neighborH;
+            currentNode->dir = dir;
+          }
+          return; //quit if we find the node
+        }
+      }
     }
   }
 }
 
 v2i AStarToTile(Entity* start, int xTarget, int yTarget) { 
 //Assumption: the max tile dimension is always a wall, and therefore assumed blocked.
-  initializeTileMinHeap(simMinHeap, gameState.maxMinHeapNodes, (TileMinHeapNode*)&((TileMinHeap)*simMinHeap) + 1);
+  simMinHeap->count = 0;
+
   Tile* targetTile = getTile(gameState.tiles, xTarget, yTarget);
   Tile* startTile = getTile(gameState.tiles, start->tileX, start->tileY);
   startTile->navListNum = gameState.currentAStarNum + 1; //add to closed list
@@ -105,7 +120,7 @@ v2i AStarToTile(Entity* start, int xTarget, int yTarget) {
     insertTileMinHeap(simMinHeap, neighborH, neighborCrossCost, neighbor, DIR_UP);
     neighbor->navListNum = gameState.currentAStarNum;
   }
-  neighbor = getTile(gameState.tiles, start->tileX-1, start->tileY);
+  neighbor = getTile(gameState.tiles, start->tileX, start->tileY-1);
   neighborCrossCost =  getTileCrossingCost(neighbor);
   neighborH = manhattanCostToTile(neighbor->x, neighbor->y, xTarget, yTarget);
   if(neighborCrossCost>=0){
@@ -116,21 +131,23 @@ v2i AStarToTile(Entity* start, int xTarget, int yTarget) {
   while(simMinHeap->count > 0) {
     TileMinHeapNode* least = popTileMinHeap(simMinHeap);
     least->tile->navListNum++;
+    int parentCost = least->costFromStart;
     Tile* current = &(*least->tile);
     if(least->tile == targetTile) {
-	  gameState.currentAStarNum += 2;
+	    gameState.currentAStarNum += 2;
       return dirToUnitVec(least->dir);
     }
+    int leastDir = least->dir;
     least->hCost = -1;
     least->costFromStart = -1;
     neighbor = getTile(gameState.tiles, current->x-1, current->y);
-    aStarListCheck(neighbor, xTarget, yTarget, least->dir);
+    aStarListCheck(neighbor, parentCost, xTarget, yTarget, leastDir);
     neighbor = getTile(gameState.tiles, current->x+1, current->y);
-    aStarListCheck(neighbor, xTarget, yTarget, least->dir);
+    aStarListCheck(neighbor, parentCost, xTarget, yTarget, leastDir);
     neighbor = getTile(gameState.tiles, current->x, current->y-1);
-    aStarListCheck(neighbor, xTarget, yTarget, least->dir);
+    aStarListCheck(neighbor, parentCost, xTarget, yTarget, leastDir);
     neighbor = getTile(gameState.tiles, current->x, current->y+1);
-    aStarListCheck(neighbor, xTarget, yTarget, least->dir);
+    aStarListCheck(neighbor, parentCost, xTarget, yTarget, leastDir);
   }
   gameState.currentAStarNum += 2;
   return V2i(0,0);
@@ -310,8 +327,4 @@ void initializeSim() {
   assert(simulationSwapSpace.space != NULL);
   gameState.maxMinHeapNodes = gameState.maxTilesX*gameState.maxTilesY;
   gameState.currentAStarNum = 1;
-  TileMinHeap* minHeap = (TileMinHeap*)simulationSwapSpace.space;
-  int minHeapSize = sizeof(TileMinHeap) + sizeof(TileMinHeapNode)*minHeap->max;
-  assert((minHeapSize - simulationSwapSpace.sizeInBytes) <= 0);
-
 }

@@ -144,9 +144,8 @@ WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine, int showC
       initializeRenderState();
       initializeSim();
       simMinHeap = (TileMinHeap*)simulationSwapSpace.space;
-      initializeTileMinHeap(simMinHeap, 20, (TileMinHeapNode*)&((TileMinHeap)*simMinHeap) + 1);
-      
-
+      simMinHeap->max = gameState.maxMinHeapNodes;
+      simMinHeap->head = (TileMinHeapNode*) (((char*)simMinHeap) + sizeof(TileMinHeap));//   ((TileMinHeap)*simMinHeap) + 1;
       initializeMobs();
 
       LARGE_INTEGER lastCounter, counterFreq;

@@ -49,7 +49,7 @@ void tuneTileSprites(GameState* state) {
             else if(x == 0 || x == state->maxTilesX-1) {
               currentTile->type = TILE_SIDE_WALL;
             }
-            else if (y == state->maxTilesY - 1) {
+            else if (y == state->maxTilesY - 1 && (getTile(state->tiles, x, y - 1))->type == TILE_FLOOR) {
              currentTile->type = TILE_TOP_WALL; 
             }
             else {
@@ -272,8 +272,8 @@ void initializeGameState() {
   gameState.cameraCenter.x = 0;
   gameState.cameraCenter.y = 0;
   gameState.turn = PLAYER_TURN;
-  gameState.maxTilesX = 15;
-  gameState.maxTilesY = 15;
+  gameState.maxTilesX = 7;
+  gameState.maxTilesY = 7;
   gameState.tiles = (Tile*)VirtualAlloc(0, gameState.maxTilesX*gameState.maxTilesX*sizeof(Tile),
    MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
   assert(gameState.tiles!=NULL);
@@ -300,6 +300,10 @@ void initializeGameState() {
     }     
   }
   (getTile(gameState.tiles, player.tileX, player.tileY))->entityHere = (Entity*) &player;
-  
+  addTile(3,6,TILE_WALL);
+  addTile(3,5,TILE_WALL);
+  addTile(3,4,TILE_WALL);
+  addTile(3,3,TILE_WALL);
+  addTile(3,2,TILE_WALL);
   tuneTileSprites(&gameState);
 }
