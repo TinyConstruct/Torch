@@ -1,5 +1,5 @@
 /////// GAME CONSTANTS //////////////////////
-//Tiles are 1 meter on both sides
+//Tiles are considered 1 meter on both sides
 global_variable float tileSideLength = 1.0f;
 
 //Game is meant for 16:10 aspect ratio (eg 1280 x 800)

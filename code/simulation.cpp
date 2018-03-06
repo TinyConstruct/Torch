@@ -263,13 +263,22 @@ void mobUpdate(EntityGroup* mobEntities, Player* playerPtr, float dt) {
           }
           else{
             //set move destination
-            v2i dir = AStarToTile(mob, playerPtr->tileX, playerPtr->tileY);
+            //if path is only 1-cost per tile from monster to player
+            v2i playerXY = V2i(player.tileX, player.tileY);
+            v2i monsterXY = V2i(mob->tileX, mob->tileY);
+            v2i dir;
+            if(tileRectIsClear(mob, playerXY, monsterXY)) {
+              dir = naiveMove(mob, playerXY.x, playerXY.y);
+            }
+            else{
+              dir = AStarToTile(mob, playerPtr->tileX, playerPtr->tileY);
+            }
             setMobFacingByDir(mob, dir.x, dir.y);
-            char strTime[40];
-            sprintf_s(strTime, 40, "dir:%i %i\n", dir.x, dir.y);
-            OutputDebugString(strTime);
             setMobDestination(mob, mob->tileX + dir.x, mob->tileY + dir.y);
             updateMobMovement(mob, dt);
+            //char strTime[40];
+            //sprintf_s(strTime, 40, "dir:%i %i\n", dir.x, dir.y);
+            //OutputDebugString(strTime);
             //sprintf_s(strTime, 40, "monster tile:%i %i\n", mob->tileX, mob->tileY);
             //OutputDebugString(strTime);
             //sprintf_s(strTime, 40, "player tile:%i %i\n", playerPtr->tileX, playerPtr->tileY);

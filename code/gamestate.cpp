@@ -92,10 +92,21 @@ int getTileCrossingCost(Tile* t) {
   }
 }
 
-inline void initializeTileMinHeap(TileMinHeap* heap, int max, TileMinHeapNode* ptr) {
-  heap->max = max;
-  heap->head = ptr;
-  heap->count = 0;
+inline bool tileRectIsClear(Entity* mob, v2i a, v2i b) {
+  int minX = min(a.x, b.x);
+  int maxX = max(a.x, b.x);
+  int minY = min(a.y, b.y);
+  int maxY = max(a.y, b.y);
+  Tile* t = NULL;
+  for(int y = minY; y <= maxY; y++) {
+    for(int x = minX; x <= maxX; x++) {
+      t = getTile(gameState.tiles,x,y);
+      if(getTileCrossingCost(t) != 1 || (!tileIsEmpty(t) && t->entityHere->type != E_PLAYER && t->entityHere != mob)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 void swap(TileMinHeapNode* a, TileMinHeapNode* b) {
@@ -255,11 +266,11 @@ void updateMobMovement(Entity* entPtr, float dt) {
   }
 }
 
-void initPlayer(int x, int y) {
+void initializePlayer(int x, int y) {
   player.type = E_PLAYER;
   player.center = V2(x + .5f, y + .5f);
   player.origin = V2(player.center.x, player.center.y);
-  player.origin = V2(player.center.x, player.center.y);
+  player.destination = V2(player.center.x, player.center.y);
   player.moveDuration = 0.0f;
   player.classType = E_FIGHTER;
   player.tileX = (int) player.center.x;
@@ -280,7 +291,7 @@ void initializeGameState() {
   gameState.flipSprites = false;
   gameState.spriteSet = 0.0f;
 
-  initPlayer(2,2);
+  initializePlayer(2,3);
 
   Tile* tile = gameState.tiles; 
   for(int i = 0; i < gameState.maxTilesY; i++) {
